@@ -8,16 +8,29 @@ import { hashStudentPassword, requireAdmin } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
-export async function PATCH(
-  request: NextRequest,
-  context: { params: { username: string } | Promise<{ username: string }> }
-) {
+type RouteContext = {
+  params: Promise<{
+    username: string;
+  }>;
+};
+
+export async function PATCH(request: NextRequest, context: RouteContext) {
   const admin = await requireAdmin(request);
-  if (!admin.ok) return admin.response;
+
+  if (!admin.ok) {
+    return admin.response;
+  }
 
   try {
     const { username } = await context.params;
     const body = await request.json();
+
+    if (!username) {
+      return NextResponse.json(
+        { error: "Username tidak valid." },
+        { status: 400 }
+      );
+    }
 
     const updateData: Record<string, unknown> = {
       updated_at: FieldValue.serverTimestamp(),
@@ -32,11 +45,17 @@ export async function PATCH(
     }
 
     const db = getAdminFirestore();
+    const userRef = db.collection(getUsersCollectionName()).doc(username);
+    const userSnapshot = await userRef.get();
 
-    await db
-      .collection(getUsersCollectionName())
-      .doc(username)
-      .update(updateData);
+    if (!userSnapshot.exists) {
+      return NextResponse.json(
+        { error: "User tidak ditemukan." },
+        { status: 404 }
+      );
+    }
+
+    await userRef.update(updateData);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -50,19 +69,35 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  context: { params: { username: string } | Promise<{ username: string }> }
-) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   const admin = await requireAdmin(request);
-  if (!admin.ok) return admin.response;
+
+  if (!admin.ok) {
+    return admin.response;
+  }
 
   try {
     const { username } = await context.params;
 
-    const db = getAdminFirestore();
+    if (!username) {
+      return NextResponse.json(
+        { error: "Username tidak valid." },
+        { status: 400 }
+      );
+    }
 
-    await db.collection(getUsersCollectionName()).doc(username).delete();
+    const db = getAdminFirestore();
+    const userRef = db.collection(getUsersCollectionName()).doc(username);
+    const userSnapshot = await userRef.get();
+
+    if (!userSnapshot.exists) {
+      return NextResponse.json(
+        { error: "User tidak ditemukan." },
+        { status: 404 }
+      );
+    }
+
+    await userRef.delete();
 
     return NextResponse.json({ success: true });
   } catch (error) {

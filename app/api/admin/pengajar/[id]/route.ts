@@ -9,12 +9,10 @@ import { requireAdmin } from "@/lib/admin-auth";
 export const runtime = "nodejs";
 
 type RouteContext = {
-  params: { id: string } | Promise<{ id: string }>;
+  params: Promise<{
+    id: string;
+  }>;
 };
-
-async function getParams(context: RouteContext) {
-  return await context.params;
-}
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   const admin = await requireAdmin(request);
@@ -24,7 +22,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const { id } = await getParams(context);
+    const { id } = await context.params;
     const body = await request.json();
 
     const nama = String(body.nama || "").trim();
@@ -89,7 +87,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const { id } = await getParams(context);
+    const { id } = await context.params;
 
     if (!id) {
       return NextResponse.json(
