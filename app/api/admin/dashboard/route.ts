@@ -184,15 +184,31 @@ function normalizeSessionMinute(value: string | null) {
   return `${year}-${month}-${day} ${hour}:${minute}`;
 }
 
+function normalizeKeyPart(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function getComputerSessionKey(session: LoginSession) {
+  const hostname = normalizeKeyPart(session.hostname);
+  const deviceId = normalizeKeyPart(session.device_id);
+  const sessionId = normalizeKeyPart(session.session_id);
+
+  if (hostname || deviceId) {
+    return [hostname, deviceId].filter(Boolean).join("@");
+  }
+
+  return sessionId;
+}
+
 function getSessionKey(session: LoginSession) {
   return [
-    session.username.trim().toLowerCase(),
-    session.lab_id.trim().toLowerCase() || session.lab_name.trim().toLowerCase(),
-    session.pengajar_id.trim().toLowerCase() ||
-      session.pengajar.trim().toLowerCase(),
-    session.mata_kuliah_id.trim().toLowerCase() ||
-      session.mata_kuliah_nama.trim().toLowerCase(),
+    normalizeKeyPart(session.username),
+    normalizeKeyPart(session.lab_id) || normalizeKeyPart(session.lab_name),
+    normalizeKeyPart(session.pengajar_id) || normalizeKeyPart(session.pengajar),
+    normalizeKeyPart(session.mata_kuliah_id) ||
+      normalizeKeyPart(session.mata_kuliah_nama),
     normalizeSessionMinute(session.login_at),
+    getComputerSessionKey(session),
   ].join("|");
 }
 

@@ -372,15 +372,32 @@ export default function DashboardPage() {
     return `${year}-${month}-${day} ${hour}:${minute}`;
   }
 
+  function normalizeReportKeyPart(value: string) {
+    return value.trim().toLowerCase();
+  }
+
+  function getReportComputerSessionKey(user: UserSession) {
+    const hostname = normalizeReportKeyPart(user.hostname);
+    const deviceId = normalizeReportKeyPart(user.device_id);
+    const sessionId = normalizeReportKeyPart(user.session_id);
+
+    if (hostname || deviceId) {
+      return [hostname, deviceId].filter(Boolean).join("@");
+    }
+
+    return sessionId || user.id;
+  }
+
   function getReportSessionKey(user: UserSession) {
     return [
-      user.username.trim().toLowerCase(),
-      user.lab_id.trim().toLowerCase() || user.lab_name.trim().toLowerCase(),
-      user.pengajar_id.trim().toLowerCase() ||
-        user.pengajar.trim().toLowerCase(),
-      user.mata_kuliah_id.trim().toLowerCase() ||
-        user.mata_kuliah_nama.trim().toLowerCase(),
+      normalizeReportKeyPart(user.username),
+      normalizeReportKeyPart(user.lab_id) || normalizeReportKeyPart(user.lab_name),
+      normalizeReportKeyPart(user.pengajar_id) ||
+        normalizeReportKeyPart(user.pengajar),
+      normalizeReportKeyPart(user.mata_kuliah_id) ||
+        normalizeReportKeyPart(user.mata_kuliah_nama),
       normalizeSessionMinute(user.login_at),
+      getReportComputerSessionKey(user),
     ].join("|");
   }
 
