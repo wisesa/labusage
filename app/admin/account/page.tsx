@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useState } from "react";
+import AdminShell from "../_components/AdminShell";
 
 export default function AdminAccountPage() {
   const [oldPassword, setOldPassword] = useState("");
@@ -59,110 +59,78 @@ export default function AdminAccountPage() {
   }
 
   return (
-    <main className="page">
-      <section className="card">
-        <div className="nav">
-          <Link href="/admin/users">User</Link>
-          <Link href="/admin/pengajar">Pengajar</Link>
-        </div>
+    <AdminShell
+      title="Akun Admin"
+      description="Kelola kredensial akun administrator yang digunakan untuk mengakses panel admin."
+    >
+      <div className="account-layout">
+        <section className="admin-card account-card">
+          <h2>Ganti Password Admin</h2>
+          <p>
+            Masukkan password lama, lalu tentukan password baru untuk sesi login
+            admin berikutnya.
+          </p>
 
-        <h1>Ganti Password Admin</h1>
+          <form className="admin-form" onSubmit={handleSubmit}>
+            <div className="admin-field">
+              <label htmlFor="old-password">Password Lama</label>
+              <input
+                id="old-password"
+                className="admin-input"
+                type="password"
+                value={oldPassword}
+                onChange={(event) => setOldPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </div>
 
-        <form onSubmit={handleSubmit}>
-          <label>Password Lama</label>
-          <input
-            type="password"
-            value={oldPassword}
-            onChange={(event) => setOldPassword(event.target.value)}
-          />
+            <div className="admin-field">
+              <label htmlFor="new-password">Password Baru</label>
+              <input
+                id="new-password"
+                className="admin-input"
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                autoComplete="new-password"
+                required
+              />
+            </div>
 
-          <label>Password Baru</label>
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(event) => setNewPassword(event.target.value)}
-          />
+            <div className="admin-field">
+              <label htmlFor="confirm-password">Konfirmasi Password Baru</label>
+              <input
+                id="confirm-password"
+                className="admin-input"
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                autoComplete="new-password"
+                required
+              />
+            </div>
 
-          <label>Konfirmasi Password Baru</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-          />
+            <button className="admin-button" disabled={loading} type="submit">
+              {loading ? "Menyimpan..." : "Ganti Password"}
+            </button>
+          </form>
 
-          <button disabled={loading}>
-            {loading ? "Menyimpan..." : "Ganti Password"}
-          </button>
-        </form>
-
-        {message && <p className="message">{message}</p>}
-      </section>
+          {message && <div className="admin-message">{message}</div>}
+        </section>
+      </div>
 
       <style jsx>{`
-        .page {
-          min-height: 100vh;
-          background: #f1f5f9;
-          padding: 40px 20px;
-          font-family: Arial, sans-serif;
+        .account-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 560px);
+          gap: 22px;
         }
 
-        .card {
-          max-width: 520px;
-          margin: 0 auto;
-          background: white;
-          border-radius: 24px;
-          padding: 28px;
-          box-shadow: 0 24px 70px rgba(15, 23, 42, 0.1);
-        }
-
-        .nav {
-          display: flex;
-          gap: 10px;
-          margin-bottom: 24px;
-        }
-
-        .nav a {
-          background: #eff6ff;
-          color: #2563eb;
-          text-decoration: none;
-          padding: 10px 14px;
-          border-radius: 12px;
-          font-weight: 800;
-        }
-
-        label {
-          display: block;
-          margin: 16px 0 8px;
-          font-weight: 800;
-          color: #334155;
-        }
-
-        input {
-          width: 100%;
-          border: 1px solid #dbeafe;
-          background: #f8fafc;
-          border-radius: 12px;
-          padding: 13px 14px;
-        }
-
-        button {
-          margin-top: 22px;
-          width: 100%;
-          border: none;
-          border-radius: 12px;
-          padding: 14px;
-          background: #2563eb;
-          color: white;
-          font-weight: 800;
-          cursor: pointer;
-        }
-
-        .message {
-          margin-top: 16px;
-          font-weight: 700;
-          color: #475569;
+        .account-card {
+          max-width: 560px;
         }
       `}</style>
-    </main>
+    </AdminShell>
   );
 }
