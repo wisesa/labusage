@@ -847,7 +847,7 @@ export default function DashboardPage() {
               onClick={() => generateUsagePdf(selectedLab, selectedPenggunaan)}
               disabled={generatingPdf}
             >
-              {generatingPdf ? "Membuat PDF..." : "📄 PDF Penggunaan"}
+              {generatingPdf ? "Membuat PDF..." : "📄 Export PDF"}
             </button>
           </div>
 
