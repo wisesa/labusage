@@ -7,6 +7,7 @@ import {
 import { ADMIN_SESSION_COOKIE } from "@/lib/admin-session";
 import {
   createAdminSessionToken,
+  getAdminSessionMaxAgeSeconds,
   verifyAdminPassword,
 } from "@/lib/admin-auth";
 
@@ -60,6 +61,7 @@ export async function POST(request: NextRequest) {
     });
 
     const token = createAdminSessionToken(username);
+    const maxAge = getAdminSessionMaxAgeSeconds();
 
     const response = NextResponse.json({
       success: true,
@@ -73,15 +75,14 @@ export async function POST(request: NextRequest) {
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
-      maxAge: 60 * 60 * 8,
+      maxAge,
     });
 
     return response;
   } catch (error) {
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Login admin gagal.",
+        error: error instanceof Error ? error.message : "Login admin gagal.",
       },
       { status: 500 }
     );

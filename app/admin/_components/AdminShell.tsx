@@ -53,8 +53,16 @@ export default function AdminShell({
           </Link>
 
           <Link href="/admin/users" className={navClass("/admin/users")}>
-            <span>👥</span>
-            User Login
+            <span>🎓</span>
+            Mahasiswa
+          </Link>
+
+          <Link
+            href="/admin/mata-kuliah"
+            className={navClass("/admin/mata-kuliah")}
+          >
+            <span>📚</span>
+            Mata Kuliah
           </Link>
 
           <Link href="/admin/pengajar" className={navClass("/admin/pengajar")}>
@@ -65,6 +73,14 @@ export default function AdminShell({
           <Link href="/admin/labs" className={navClass("/admin/labs")}>
             <span>🏫</span>
             Master Lab
+          </Link>
+
+          <Link
+            href="/admin/report-settings"
+            className={navClass("/admin/report-settings")}
+          >
+            <span>🖊️</span>
+            Pengaturan PDF
           </Link>
 
           <Link href="/admin/account" className={navClass("/admin/account")}>
@@ -472,6 +488,51 @@ export default function AdminShell({
           .admin-toolbar {
             flex-direction: column;
             align-items: stretch;
+          }
+        }
+
+        .admin-icon-button {
+          width: 48px;
+          height: 48px;
+          border: 0;
+          border-radius: 16px;
+          background: #e2e8f0;
+          color: #0f172a;
+          display: inline-grid;
+          place-items: center;
+          cursor: pointer;
+          font-size: 22px;
+          font-weight: 950;
+          transition: 0.18s ease;
+        }
+
+        .admin-icon-button:hover {
+          background: #cbd5e1;
+          transform: translateY(-1px);
+        }
+
+        .admin-icon-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .admin-refresh-icon {
+          display: inline-block;
+          line-height: 1;
+        }
+
+        .admin-refresh-icon.spinning {
+          animation: spin-refresh 0.8s linear infinite;
+        }
+
+        @keyframes spin-refresh {
+          from {
+            transform: rotate(0deg);
+          }
+
+          to {
+            transform: rotate(360deg);
           }
         }
       `}</style>

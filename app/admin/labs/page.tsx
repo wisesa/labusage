@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import AdminShell from "../_components/AdminShell";
+import RefreshButton from "../_components/RefreshButton";
 
 type Lab = {
   id: string;
@@ -216,14 +217,7 @@ export default function LabsPage() {
               <p>Total {labs.length} data lab.</p>
             </div>
 
-            <button
-              type="button"
-              className="admin-button secondary"
-              onClick={loadLabs}
-              disabled={loading}
-            >
-              {loading ? "Memuat..." : "Muat Ulang"}
-            </button>
+            <RefreshButton loading={loading} onClick={loadLabs} />
           </div>
 
           <input

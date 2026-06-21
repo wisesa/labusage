@@ -6,14 +6,11 @@ import {
   timingSafeEqual,
 } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { ADMIN_SESSION_COOKIE } from "@/lib/admin-session";
 import {
   getAdminFirestore,
   getAdminsCollectionName,
 } from "@/lib/firebase-admin";
-
-import { ADMIN_SESSION_COOKIE } from "@/lib/admin-session";
-
-const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
 type AdminSessionPayload = {
   username: string;
@@ -28,6 +25,16 @@ function getSessionSecret() {
   }
 
   return secret;
+}
+
+export function getAdminSessionMaxAgeSeconds() {
+  const days = Number(process.env.ADMIN_SESSION_MAX_AGE_DAYS || 365);
+
+  if (!Number.isFinite(days) || days <= 0) {
+    return 60 * 60 * 24 * 365;
+  }
+
+  return Math.floor(days * 24 * 60 * 60);
 }
 
 function safeEqual(a: string, b: string) {
@@ -81,7 +88,6 @@ export function verifyAdminPassword(password: string, storedHash: string) {
     return safeEqual(actualHash, expectedHash);
   }
 
-  // Fallback untuk hash lama SHA-256 jika nanti ada migrasi.
   const legacyHash = createHash("sha256").update(password, "utf8").digest("hex");
   return safeEqual(legacyHash, storedHash);
 }
@@ -91,9 +97,11 @@ export function hashStudentPassword(password: string) {
 }
 
 export function createAdminSessionToken(username: string) {
+  const maxAgeSeconds = getAdminSessionMaxAgeSeconds();
+
   const payload: AdminSessionPayload = {
     username,
-    exp: Date.now() + ADMIN_SESSION_MAX_AGE_SECONDS * 1000,
+    exp: Date.now() + maxAgeSeconds * 1000,
   };
 
   const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString(

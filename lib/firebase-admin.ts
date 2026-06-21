@@ -57,6 +57,21 @@ export function getLabsCollectionName() {
   return process.env.FIRESTORE_LABS_COLLECTION || "labs";
 }
 
+export function getMataKuliahCollectionName() {
+  return process.env.FIRESTORE_MATA_KULIAH_COLLECTION || "mata_kuliah";
+}
+
+export function getLabUsageSettingsCollectionName() {
+  return (
+    process.env.FIRESTORE_LAB_USAGE_SETTINGS_COLLECTION ||
+    "lab_usage_settings"
+  );
+}
+
+export function getReportSettingsCollectionName() {
+  return process.env.FIRESTORE_REPORT_SETTINGS_COLLECTION || "report_settings";
+}
+
 export function getAdminsCollectionName() {
   return process.env.FIRESTORE_ADMINS_COLLECTION || "admins";
 }

@@ -35,6 +35,10 @@ export async function GET(request: NextRequest) {
 
         return {
           username: doc.id,
+          nim: data.nim || "",
+          nama: data.nama || "",
+          kelas: data.kelas || "",
+          password: data.password_plain || data.password || "",
           active: data.active !== false,
           last_login_at: serializeDate(data.last_login_at),
           last_login_lab: data.last_login_lab || "",
@@ -44,14 +48,20 @@ export async function GET(request: NextRequest) {
           updated_at: serializeDate(data.updated_at),
         };
       })
-      .sort((a, b) => a.username.localeCompare(b.username));
+      .sort((a, b) => {
+        const nimCompare = String(a.nim).localeCompare(String(b.nim), "id");
+        if (nimCompare !== 0) return nimCompare;
+        return a.username.localeCompare(b.username, "id");
+      });
 
     return NextResponse.json({ users });
   } catch (error) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Gagal membaca data user.",
+          error instanceof Error
+            ? error.message
+            : "Gagal membaca data mahasiswa.",
       },
       { status: 500 }
     );
@@ -65,8 +75,27 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    const nim = String(body.nim || "").trim();
+    const nama = String(body.nama || "").trim();
+    const kelas = String(body.kelas || "").trim();
     const username = String(body.username || "").trim();
     const password = String(body.password || "");
+    const active = body.active !== false;
+
+    if (!nim) {
+      return NextResponse.json({ error: "NIM wajib diisi." }, { status: 400 });
+    }
+
+    if (!nama) {
+      return NextResponse.json({ error: "Nama wajib diisi." }, { status: 400 });
+    }
+
+    if (!kelas) {
+      return NextResponse.json(
+        { error: "Kelas wajib diisi." },
+        { status: 400 }
+      );
+    }
 
     if (!username) {
       return NextResponse.json(
@@ -83,7 +112,9 @@ export async function POST(request: NextRequest) {
     }
 
     const db = getAdminFirestore();
-    const userRef = db.collection(getUsersCollectionName()).doc(username);
+    const collection = db.collection(getUsersCollectionName());
+
+    const userRef = collection.doc(username);
     const userSnapshot = await userRef.get();
 
     if (userSnapshot.exists) {
@@ -93,23 +124,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sameNimSnapshot = await collection
+      .where("nim", "==", nim)
+      .limit(1)
+      .get();
+
+    if (!sameNimSnapshot.empty) {
+      return NextResponse.json(
+        { error: `NIM ${nim} sudah dipakai mahasiswa lain.` },
+        { status: 409 }
+      );
+    }
+
     await userRef.set({
       username,
+      nim,
+      nama,
+      kelas,
       password_hash: hashStudentPassword(password),
-      active: body.active !== false,
+      password_plain: password,
+      active,
+      created_by: admin.username,
+      updated_by: admin.username,
       created_at: FieldValue.serverTimestamp(),
       updated_at: FieldValue.serverTimestamp(),
     });
 
     return NextResponse.json({
       username,
-      active: body.active !== false,
+      nim,
+      nama,
+      kelas,
+      password,
+      active,
     });
   } catch (error) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Gagal menambah user.",
+          error instanceof Error
+            ? error.message
+            : "Gagal menambah mahasiswa.",
       },
       { status: 500 }
     );

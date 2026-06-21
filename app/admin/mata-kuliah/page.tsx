@@ -4,14 +4,16 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import AdminShell from "../_components/AdminShell";
 import RefreshButton from "../_components/RefreshButton";
 
-type Pengajar = {
+type MataKuliah = {
   id: string;
+  kode: string;
   nama: string;
   active: boolean;
 };
 
-export default function PengajarPage() {
-  const [pengajar, setPengajar] = useState<Pengajar[]>([]);
+export default function MataKuliahPage() {
+  const [items, setItems] = useState<MataKuliah[]>([]);
+  const [kode, setKode] = useState("");
   const [nama, setNama] = useState("");
   const [active, setActive] = useState(true);
   const [search, setSearch] = useState("");
@@ -19,25 +21,28 @@ export default function PengajarPage() {
   const [loading, setLoading] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editKode, setEditKode] = useState("");
   const [editNama, setEditNama] = useState("");
   const [editActive, setEditActive] = useState(true);
 
-  const filteredPengajar = useMemo(() => {
+  const filteredItems = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
-    const sorted = [...pengajar].sort((a, b) =>
-      a.nama.localeCompare(b.nama, "id")
-    );
+    const sorted = [...items].sort((a, b) => {
+      const kodeCompare = a.kode.localeCompare(b.kode, "id");
+      if (kodeCompare !== 0) return kodeCompare;
+      return a.nama.localeCompare(b.nama, "id");
+    });
 
     if (!keyword) return sorted;
 
     return sorted.filter((item) =>
-      item.nama.toLowerCase().includes(keyword)
+      [item.kode, item.nama].join(" ").toLowerCase().includes(keyword)
     );
-  }, [pengajar, search]);
+  }, [items, search]);
 
   useEffect(() => {
-    loadPengajar();
+    loadItems();
   }, []);
 
   async function requestApi(path: string, options: RequestInit = {}) {
@@ -53,7 +58,7 @@ export default function PengajarPage() {
     const data = await response.json().catch(() => ({}));
 
     if (response.status === 401) {
-      window.location.href = "/admin/login?next=/admin/pengajar";
+      window.location.href = "/admin/login?next=/admin/mata-kuliah";
       return null;
     }
 
@@ -64,16 +69,18 @@ export default function PengajarPage() {
     return data;
   }
 
-  async function loadPengajar() {
+  async function loadItems() {
     setLoading(true);
     setMessage("");
 
     try {
-      const data = await requestApi("/api/admin/pengajar");
-      if (data) setPengajar(data.pengajar || []);
+      const data = await requestApi("/api/admin/mata-kuliah");
+      if (data) setItems(data.mata_kuliah || []);
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Gagal memuat pengajar."
+        error instanceof Error
+          ? error.message
+          : "Gagal memuat mata kuliah."
       );
     } finally {
       setLoading(false);
@@ -84,7 +91,7 @@ export default function PengajarPage() {
     event.preventDefault();
 
     if (!nama.trim()) {
-      setMessage("Nama pengajar wajib diisi.");
+      setMessage("Nama mata kuliah wajib diisi.");
       return;
     }
 
@@ -92,42 +99,48 @@ export default function PengajarPage() {
     setMessage("");
 
     try {
-      await requestApi("/api/admin/pengajar", {
+      await requestApi("/api/admin/mata-kuliah", {
         method: "POST",
         body: JSON.stringify({
+          kode: kode.trim(),
           nama: nama.trim(),
           active,
         }),
       });
 
+      setKode("");
       setNama("");
       setActive(true);
-      setMessage("Pengajar berhasil ditambahkan.");
-      await loadPengajar();
+      setMessage("Mata kuliah berhasil ditambahkan.");
+      await loadItems();
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Gagal menambah pengajar."
+        error instanceof Error
+          ? error.message
+          : "Gagal menambah mata kuliah."
       );
     } finally {
       setLoading(false);
     }
   }
 
-  function startEdit(item: Pengajar) {
+  function startEdit(item: MataKuliah) {
     setEditingId(item.id);
-    setEditNama(item.nama);
+    setEditKode(item.kode || "");
+    setEditNama(item.nama || "");
     setEditActive(item.active !== false);
   }
 
   function cancelEdit() {
     setEditingId(null);
+    setEditKode("");
     setEditNama("");
     setEditActive(true);
   }
 
   async function handleUpdate(id: string) {
     if (!editNama.trim()) {
-      setMessage("Nama pengajar wajib diisi.");
+      setMessage("Nama mata kuliah wajib diisi.");
       return;
     }
 
@@ -135,43 +148,48 @@ export default function PengajarPage() {
     setMessage("");
 
     try {
-      await requestApi(`/api/admin/pengajar/${encodeURIComponent(id)}`, {
+      await requestApi(`/api/admin/mata-kuliah/${encodeURIComponent(id)}`, {
         method: "PATCH",
         body: JSON.stringify({
+          kode: editKode.trim(),
           nama: editNama.trim(),
           active: editActive,
         }),
       });
 
       cancelEdit();
-      setMessage("Pengajar berhasil diperbarui.");
-      await loadPengajar();
+      setMessage("Mata kuliah berhasil diperbarui.");
+      await loadItems();
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Gagal memperbarui pengajar."
+        error instanceof Error
+          ? error.message
+          : "Gagal memperbarui mata kuliah."
       );
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleDelete(id: string, namaPengajar: string) {
-    const ok = window.confirm(`Hapus pengajar "${namaPengajar}"?`);
+  async function handleDelete(id: string, namaMataKuliah: string) {
+    const ok = window.confirm(`Hapus mata kuliah "${namaMataKuliah}"?`);
     if (!ok) return;
 
     setLoading(true);
     setMessage("");
 
     try {
-      await requestApi(`/api/admin/pengajar/${encodeURIComponent(id)}`, {
+      await requestApi(`/api/admin/mata-kuliah/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
 
-      setMessage("Pengajar berhasil dihapus.");
-      await loadPengajar();
+      setMessage("Mata kuliah berhasil dihapus.");
+      await loadItems();
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Gagal menghapus pengajar."
+        error instanceof Error
+          ? error.message
+          : "Gagal menghapus mata kuliah."
       );
     } finally {
       setLoading(false);
@@ -180,22 +198,32 @@ export default function PengajarPage() {
 
   return (
     <AdminShell
-      title="Kelola Pengajar"
-      description="Tambah, ubah, nonaktifkan, atau hapus daftar pengajar yang muncul di dropdown aplikasi client Python. Urutan tampil otomatis berdasarkan abjad nama."
+      title="Master Mata Kuliah"
+      description="Kelola daftar mata kuliah yang digunakan pada dashboard penggunaan lab dan export PDF."
     >
       <div className="admin-grid">
         <section className="admin-card">
-          <h2>Tambah Pengajar</h2>
-          <p>Pengajar aktif akan muncul pada pilihan login mahasiswa.</p>
+          <h2>Tambah Mata Kuliah</h2>
+          <p>Mata kuliah aktif akan muncul di dropdown dashboard penggunaan lab.</p>
 
           <form className="admin-form" onSubmit={handleCreate}>
             <div className="admin-field">
-              <label>Nama Pengajar</label>
+              <label>Kode</label>
+              <input
+                className="admin-input"
+                value={kode}
+                onChange={(event) => setKode(event.target.value)}
+                placeholder="Contoh: MK-001"
+              />
+            </div>
+
+            <div className="admin-field">
+              <label>Nama Mata Kuliah</label>
               <input
                 className="admin-input"
                 value={nama}
                 onChange={(event) => setNama(event.target.value)}
-                placeholder="Contoh: Budi Santoso"
+                placeholder="Contoh: Pemrograman Dasar"
               />
             </div>
 
@@ -205,11 +233,11 @@ export default function PengajarPage() {
                 checked={active}
                 onChange={(event) => setActive(event.target.checked)}
               />
-              Pengajar aktif
+              Mata kuliah aktif
             </label>
 
             <button className="admin-button" disabled={loading}>
-              {loading ? "Menyimpan..." : "Tambah Pengajar"}
+              {loading ? "Menyimpan..." : "Tambah Mata Kuliah"}
             </button>
           </form>
 
@@ -219,18 +247,18 @@ export default function PengajarPage() {
         <section className="admin-card">
           <div className="admin-toolbar">
             <div>
-              <h2>Daftar Pengajar</h2>
-              <p>Total {pengajar.length} data pengajar.</p>
+              <h2>Daftar Mata Kuliah</h2>
+              <p>Total {items.length} data mata kuliah.</p>
             </div>
 
-            <RefreshButton loading={loading} onClick={loadPengajar} />
+            <RefreshButton loading={loading} onClick={loadItems} />
           </div>
 
           <input
             className="admin-input admin-search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Cari nama pengajar..."
+            placeholder="Cari kode atau nama mata kuliah..."
           />
 
           <div style={{ height: 16 }} />
@@ -239,23 +267,36 @@ export default function PengajarPage() {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Nama</th>
+                  <th>Kode</th>
+                  <th>Nama Mata Kuliah</th>
                   <th>Status</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
 
               <tbody>
-                {filteredPengajar.length === 0 && (
+                {filteredItems.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="admin-empty">
-                      Belum ada pengajar yang cocok.
+                    <td colSpan={4} className="admin-empty">
+                      Belum ada mata kuliah yang cocok.
                     </td>
                   </tr>
                 )}
 
-                {filteredPengajar.map((item) => (
+                {filteredItems.map((item) => (
                   <tr key={item.id}>
+                    <td>
+                      {editingId === item.id ? (
+                        <input
+                          className="admin-input"
+                          value={editKode}
+                          onChange={(event) => setEditKode(event.target.value)}
+                        />
+                      ) : (
+                        <strong>{item.kode || "-"}</strong>
+                      )}
+                    </td>
+
                     <td>
                       {editingId === item.id ? (
                         <input

@@ -5,13 +5,36 @@ import { FormEvent, useEffect, useState } from "react";
 export default function AdminLoginPage() {
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
-  const [nextPath, setNextPath] = useState("/admin/users");
+  const [nextPath, setNextPath] = useState("/admin/dashboard");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setNextPath(params.get("next") || "/admin/users");
+    const targetPath = params.get("next") || "/admin/dashboard";
+
+    setNextPath(targetPath);
+
+    async function checkSession() {
+      try {
+        const response = await fetch("/api/admin/auth/me", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          window.location.href = targetPath;
+          return;
+        }
+      } catch {
+        // Abaikan, tampilkan form login.
+      } finally {
+        setCheckingSession(false);
+      }
+    }
+
+    checkSession();
   }, []);
 
   async function handleSubmit(event: FormEvent) {
@@ -44,12 +67,67 @@ export default function AdminLoginPage() {
     }
   }
 
+  if (checkingSession) {
+    return (
+      <main className="page">
+        <section className="card">
+          <div className="icon">🔐</div>
+          <h1>Memeriksa sesi...</h1>
+          <p>Mohon tunggu sebentar.</p>
+        </section>
+
+        <style jsx>{`
+          .page {
+            min-height: 100vh;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+          }
+
+          .card {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            border-radius: 24px;
+            padding: 34px;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+          }
+
+          .icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 22px;
+            background: #eff6ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            margin-bottom: 18px;
+          }
+
+          h1 {
+            margin: 0 0 8px;
+            color: #0f172a;
+          }
+
+          p {
+            margin: 0;
+            color: #64748b;
+          }
+        `}</style>
+      </main>
+    );
+  }
+
   return (
     <main className="page">
       <form className="card" onSubmit={handleSubmit}>
         <div className="icon">🔐</div>
         <h1>Login Admin</h1>
-        <p>Masuk untuk mengelola user mahasiswa dan pengajar.</p>
+        <p>Masuk untuk mengelola user mahasiswa, pengajar, dan lab.</p>
 
         <label>Username</label>
         <input
@@ -65,7 +143,9 @@ export default function AdminLoginPage() {
           onChange={(event) => setPassword(event.target.value)}
         />
 
-        <button disabled={loading}>{loading ? "Memproses..." : "Login"}</button>
+        <button disabled={loading}>
+          {loading ? "Memproses..." : "Login"}
+        </button>
 
         {message && <div className="message">{message}</div>}
       </form>
@@ -138,6 +218,11 @@ export default function AdminLoginPage() {
           color: white;
           font-weight: 800;
           cursor: pointer;
+        }
+
+        button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
 
         .message {
