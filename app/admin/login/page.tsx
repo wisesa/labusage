@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 
 export default function AdminLoginPage() {
-  const [username, setUsername] = useState("admin");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [nextPath, setNextPath] = useState("/admin/dashboard");
   const [loading, setLoading] = useState(false);
